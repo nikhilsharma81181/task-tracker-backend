@@ -16,24 +16,39 @@ statsRouter.get("/:userID/:projectID", async (req, res) => {
   console.log(project[0].name);
   const tasks = await TaskModel.find({ projectID });
 
+  const tasksWithFormattedDuration = tasks.map((task) => ({
+    ...task,
+    duration: formatDuration(task.duration),
+  }));
   const fields = ["name", "duration"];
   const opts = { fields };
   const parser = new Parser(opts);
-  const csvData = parser.parse(tasks);
+  const csvData = parser.parse(tasksWithFormattedDuration);
   fs.writeFileSync("../csv_files", csvData);
   const base64Data = Buffer.from(csvData).toString("base64");
   res.send({ csv: base64Data });
-
-  // const project = mongoose.Types.ObjectId(req.params.projectID);
-  // console.log(project);
-  // try {
-  //   const tasks = await TaskModel.find({ projectID: project });
-  //   res.json(tasks);
-  // } catch (err) {
-  //   console.log(err);
-  //   res.status(500).json({ msg: "Something went wrong" });
-  // }
 });
+
+function formatDuration(durationInSeconds) {
+  const dayInSeconds = 24 * 60 * 60;
+  const hourInSeconds = 60 * 60;
+  const minuteInSeconds = 60;
+
+  if (durationInSeconds >= dayInSeconds) {
+    const days = Math.floor(durationInSeconds / dayInSeconds);
+    durationInSeconds %= dayInSeconds;
+    const hours = Math.floor(durationInSeconds / hourInSeconds);
+    return `${days}d ${hours}hr`;
+  } else if (durationInSeconds >= hourInSeconds) {
+    const hours = Math.floor(durationInSeconds / hourInSeconds);
+    durationInSeconds %= hourInSeconds;
+    const minutes = Math.floor(durationInSeconds / minuteInSeconds);
+    return `${hours}hr ${minutes}min`;
+  } else {
+    const minutes = Math.floor(durationInSeconds / minuteInSeconds);
+    return `${minutes}min`;
+  }
+}
 
 module.exports = {
   statsRouter,
