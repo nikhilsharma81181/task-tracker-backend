@@ -39,15 +39,21 @@ userRouter.post("/register", async (req, res) => {
       if (err) {
         console.log({ msg: "Something went wrong" });
       } else {
-        const user = new UserModel({ name, email, pass: hash_pass });
-        await user.save();
-        const _id = String(user._id);
-        let token = jwt.sign({ userID: _id }, process.env.KEY);
-        res.json({
-          msg: "login successfully",
-          token,
-          user: { _id, name, email },
-        });
+        const oldUser = await UserModel.find({ email: email });
+        console.log(oldUser);
+        if (oldUser.length != 0 && oldUser[0].email == email) {
+          res.json({ msg: "User Exists" });
+        } else {
+          const user = new UserModel({ name, email, pass: hash_pass });
+          await user.save();
+          const _id = String(user._id);
+          let token = jwt.sign({ userID: _id }, process.env.KEY);
+          res.json({
+            msg: "login successfully",
+            token,
+            user: { _id, name, email },
+          });
+        }
       }
     });
   } catch (err) {
