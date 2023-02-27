@@ -21,9 +21,13 @@ statsRouter.get("/:userID/:projectID", async (req, res) => {
     duration: formatDuration(task.duration),
   }));
   const fields = ["name", "duration"];
+  const rows = tasks.map((task) => ({
+    name: task.name,
+    duration: formatDuration(task.duration),
+  }));
   const opts = { fields };
   const parser = new Parser(opts);
-  const csvData = parser.parse(tasksWithFormattedDuration);
+  const csvData = parser.parse(rows);
   fs.writeFileSync("../csv_files", csvData);
   const base64Data = Buffer.from(csvData).toString("base64");
   res.send({ csv: base64Data });
